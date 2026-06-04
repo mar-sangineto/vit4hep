@@ -1,0 +1,70 @@
+_target_: experiments.lorenzetti.model.LorenzettiCFM
+in_channels: 1
+shape: [6320]    # total number of input voxels
+list_shape: [
+  [1, 256, 8],  # 0: EMB1
+  [1, 32, 32],  # 1: EMB2
+  [1, 16, 80],  # 2: EMB3
+  [1, 55, 8],   # 3: EMEC1
+  [1, 13, 32],  # 4: EMEC2
+  [1, 8, 32],   # 5: EMEC3
+  [1, 4, 8],    # 6: HEC1
+  [1, 4, 8],    # 7: HEC2
+  [1, 4, 8],    # 8: HEC3
+  [1, 32, 8],   # 9: PSB
+  [1, 32, 8],   # 10: PSE
+  [1, 8, 8],    # 11: TileCal1
+  [1, 8, 8],    # 12: TileCal2
+  [1, 5, 8],    # 13: TileCal3
+  [1, 4, 8],    # 14: TileExt1
+  [1, 4, 8],    # 15: TileExt2
+  [1, 2, 8]     # 16: TileExt3
+]   # shape of each layer
+list_edges: [2048, 1024, 1280, 440, 416, 256, 32, 32, 32, 256, 256, 64, 64, 40, 32, 32, 16]  # edges used to reconstruct the detector from a flat vector (multiplication of shape)
+list_patch_shape: [
+  [1, 8, 1],    # EMB1   (8 * 1 = 8)
+  [1, 4, 2],    # EMB2   (4 * 2 = 8)
+  [1, 2, 4],    # EMB3   (2 * 4 = 8)
+  [1, 1, 8],    # EMEC1  (1 * 8 = 8) - 1 for 55 
+  [1, 1, 8],    # EMEC2  (1 * 8 = 8) - 1 for 13
+  [1, 1, 8],    # EMEC3  (1 * 8 = 8)
+  [1, 2, 4],    # HEC1   (2 * 4 = 8)
+  [1, 2, 4],    # HEC2   (2 * 4 = 8)
+  [1, 2, 4],    # HEC3   (2 * 4 = 8)
+  [1, 8, 1],    # PSB    (8 * 1 = 8)
+  [1, 8, 1],    # PSE    (8 * 1 = 8)
+  [1, 4, 2],    # TileCal1 (4 * 2 = 8)
+  [1, 4, 2],    # TileCal2 (4 * 2 = 8)
+  [1, 1, 8],    # TileCal3 (1 * 8 = 8) - 1 for 5
+  [1, 2, 4],    # TileExt1 (2 * 4 = 8)
+  [1, 2, 4],    # TileExt2 (2 * 4 = 8)
+  [1, 2, 4]     # TileExt3 (2 * 4 = 8)
+] # patch shape for each layer
+
+time_distribution: uniform
+trajectory: linear
+odeint_kwargs:
+  method: rk4
+  options:
+    step_size: 0.05
+
+net:
+  _target_: nn.vit.ViT
+  param:
+    dim: 3
+    condition_dim: 20 ### !!! 1 energy + 17 layers + 1 eta + phi = 20
+    hidden_dim: 480
+    out_channels: 1
+    depth: 6
+    num_heads: 6
+    mlp_ratio: 4
+    attn_drop: 0.0
+    proj_drop: 0.0
+    pos_embedding_coords: cylindrical ### !!!
+    temperature: 10000
+    learn_pos_embed: true
+    causal_attn: false
+    checkpoint_grads: false
+    num_patches: [[1, 32, 8], [1, 8, 16], [1, 8, 20], [1, 55, 1], [1, 13, 4], [1, 8, 4], [1, 2, 2], [1, 2, 2], [1, 2, 2], [1, 4, 8], [1, 4, 8], [1, 2, 4], [1, 2, 4], [1, 5, 1], [1, 2, 2], [1, 2, 2], [1, 1, 2]]
+    patch_dim: 8
+    use_torch_sdpa: false
