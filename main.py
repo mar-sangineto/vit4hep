@@ -48,6 +48,14 @@ def experiment(rank, world_size, cfg):
         from experiments.calogan.experiment_finetuning import CaloGANFTCFM
 
         exp = CaloGANFTCFM(cfg, rank, world_size)
+    elif cfg.exp_type == "lorenzetti":
+        from experiments.lorenzetti.experiment import Lorenzetti
+
+        exp = Lorenzetti(cfg, rank, world_size)
+    elif cfg.exp_type == "lorenzetti_ft_cfm":
+        from experiments.lorenzetti.experiment_finetuning import LorenzettiFTCFM
+
+        exp = LorenzettiFTCFM(cfg, rank, world_size)
     elif cfg.exp_type == "lemurs":
         from experiments.lemurs.experiment import LEMURS
 
