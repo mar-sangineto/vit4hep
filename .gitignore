@@ -1,4 +1,6 @@
 runs/*
 scripts/*
 *.out
-configs/*
+#configs/*
+__pycache__/
+*.pyc
