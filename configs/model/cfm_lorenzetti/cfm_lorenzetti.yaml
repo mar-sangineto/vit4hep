@@ -51,8 +51,8 @@ odeint_kwargs:
 net:
   _target_: nn.vit.ViT
   param:
-    dim: 3
-    condition_dim: 20 ### !!! 1 energy + 17 layers + 1 eta + phi = 20
+    dim: 17 # number of layers
+    condition_dim: 18 ### !!! 1 energy + 17 layers + 1 eta + 1 phi = 20
     hidden_dim: 480
     out_channels: 1
     depth: 6

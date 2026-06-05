@@ -1,6 +1,6 @@
 _target_: models.base_model.CFM
 
-shape: [3]
+shape: [17] # number of layers
 
 time_distribution: uniform
 trajectory: linear
@@ -12,8 +12,8 @@ odeint_kwargs:
 net:
   _target_: nn.cfm.transformer_cfm.ParallelTransformer
   param:
-    dims_in: 3
-    dims_c: 1
+    dims_in: 17 # number of layers
+    dims_c: 1 # dimention of C variable: energy
     dim_embedding: 64
     nhead: 4
     num_encoder_layers: 4
