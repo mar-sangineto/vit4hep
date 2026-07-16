@@ -143,7 +143,7 @@ class LorenzettiNormalizeLayerEnergy:
         self.eps = eps
         self.cut = cut
         self.layer_keys = [f"layer_{i}" for i in range(n_layers)]
-        self.n_layers = 3
+        self.n_layers = n_layers
 
     def __call__(self, data_dict, rev=False, rank=0):
         energy = data_dict["energy"]

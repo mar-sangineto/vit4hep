@@ -252,7 +252,7 @@ class Lorenzetti(BaseExperiment):
             samples = (
                 torch.hstack(
                     (
-                        [self.data_dict[f"layer_{i}"] for i in range(self.n_layers)]
+                        [samples_dict[f"layer_{i}"] for i in range(self.n_layers)]
                     ),
                 )
                 .detach()
@@ -265,7 +265,7 @@ class Lorenzetti(BaseExperiment):
 
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                eval_lorezetti_lowlevel(samples, self.cfg)
+                eval_lorenzetti_lowlevel(samples, self.cfg)
 
     def eval_sample(self, dirname=""):
         samples, energies = self.load_sample(dirname=dirname)
