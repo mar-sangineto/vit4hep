@@ -3,13 +3,13 @@ exp_name: Lorenzetti
 dtype: float32
 
 model_type: shape
-sample_us: false
-energy_model: /path/to/trained/energy-model  # used if sample_us==true
+sample_us: true
+energy_model: /eos/user/m/msangine/lpnhe_workspace/git/my_git/vit4hep/runs/Lorenzetti/lorenzetti_18480/  # used if sample_us==true
 n_samples: 100000   # used if sample_us==true
 
 data:
-  training_file: /eos/user/m/msangine/data/lorenzetti/h5/train_40kElectron.h5
-  test_file: /eos/user/m/msangine/data/lorenzetti/h5/test_40kElectron.h5
+  training_file: /eos/user/m/msangine/data/lorenzetti/h5/fixed45kElectron.h5
+  test_file: /eos/user/m/msangine/data/lorenzetti/h5/fixed45kElectron.h5
   bin_edges: [0, 2048, 3072, 4352, 4792, 5208, 5464, 5496, 5528, 5560, 5816, 6072, 6136, 6200, 6240, 6272, 6304, 6320]
   return_us: false
   transforms: {
@@ -38,3 +38,4 @@ defaults:
  - /default
  - /training: cfm/shape
  - /model: cfm_lorenzetti/cfm_lorenzetti
+ - _self_
