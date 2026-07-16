@@ -1,4 +1,4 @@
-exp_type: lorezetti_ft_cfm
+exp_type: lorenzetti_ft_cfm
 exp_name: Lorenzetti_fromCaloGAN
 dtype: float32
 
@@ -11,11 +11,11 @@ data:
   bin_edges: [0, 2048, 3072, 4352, 4792, 5208, 5464, 5496, 5528, 5560, 5816, 6072, 6136, 6200, 6240, 6272, 6304, 6320]
   return_us: false
   transforms: {
-    NormalizeLayerEnergyGAN: {},
-    ExclusiveLogitTransformGAN: {delta: 1.0e-6, rescale: False},
-    GlobalStandardizeFromFileGAN: {model_dir: None},
-    LogEnergyGAN: {},
-    ScaleEnergyGAN: {e_min: 6.907755, e_max: 13.815510},
+    LorenzettiNormalizeLayerEnergy: {},
+    LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False},
+    LorenzettiGlobalStandardizeFromFile: {model_dir: None},
+    LorenzettiLogEnergy: {},
+    LorenzettiScaleEnergy: {e_min: 6.907755, e_max: 13.815510},
   }
   
 finetuning:
