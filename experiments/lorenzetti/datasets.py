@@ -17,7 +17,7 @@ class LorenzettiDataset(Dataset):
         return_us=False,
         dtype=torch.float32,
         rank=0,
-        n_layers=17,
+        bin_edges=None,
     ):
         """
         Arguments:
@@ -26,10 +26,16 @@ class LorenzettiDataset(Dataset):
             return_us: whether to return the extra layer energy conditions (used for the energy network)
             dtype: data type for the voxels and conditions
             rank: rank of the process
+            bin_edges: cumulative voxel-count boundaries per layer (len = n_layers + 1);
+                defaults to the original 17-layer edges if not given
         """
 
-        self.data_dict = load_data(hdf5_file)
-        self.bin_edges = np.array([0, 2048, 3072, 4352, 4792, 5208, 5464, 5496, 5528, 5560, 5816, 6072, 6136, 6200, 6240, 6272, 6304, 6320])
+        if bin_edges is None:
+            bin_edges = [0, 2048, 3072, 4352, 4792, 5208, 5464, 5496, 5528, 5560, 5816, 6072, 6136, 6200, 6240, 6272, 6304, 6320]
+        self.bin_edges = np.array(bin_edges)
+        n_layers = len(self.bin_edges) - 1
+
+        self.data_dict = load_data(hdf5_file, n_layers=n_layers)
 
         for key in self.data_dict.keys():
             self.data_dict[key] = torch.tensor(self.data_dict[key]).flatten(start_dim=1)

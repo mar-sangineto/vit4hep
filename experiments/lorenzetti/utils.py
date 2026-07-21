@@ -17,10 +17,12 @@ def load_data(data_file, n_layers=17):
             
             layer_data = full_file[layer_name][:]
             
-            data[f"layer_{i}"] = np.log10(layer_data+shift) # log is to deal with a large range of values
+            #data[f"layer_{i}"] = np.log10(layer_data+shift) # log is to deal with a large range of values
+            data[f"layer_{i}"] = layer_data
             
         energy = full_file["energy"][:]
-        data["energy"] = np.log10(energy) # truth particle wont have negative energy
+        #data["energy"] = np.log10(energy) # truth particle wont have negative energy
+        data["energy"] = energy
         
         ### Next step : implement eta and phi. Initial tests with just energy so that it works as it is working in calogan
 #         # to integrate C

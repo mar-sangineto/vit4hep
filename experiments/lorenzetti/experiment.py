@@ -44,7 +44,11 @@ class Lorenzetti(BaseExperiment):
         self.return_us = self.cfg.data.return_us
         self.transforms = []
         
-        self.n_layers = 17 # try to take this to cfg
+        self.n_layers = self.cfg.data.n_layers
+        assert len(self.cfg.data.bin_edges) - 1 == self.n_layers, (
+            f"data.bin_edges has {len(self.cfg.data.bin_edges) - 1} layers but "
+            f"data.n_layers={self.n_layers} -- keep them in sync"
+        )
 
         LOGGER.info("init_data: preparing model training")
         for name, kwargs in self.cfg.data.transforms.items():
@@ -61,6 +65,7 @@ class Lorenzetti(BaseExperiment):
             return_us=self.return_us,
             dtype=self.dtype,
             rank=self.rank,
+            bin_edges=self.cfg.data.bin_edges,
         )
 
         self.val_dataset = LorenzettiDataset(
@@ -69,6 +74,7 @@ class Lorenzetti(BaseExperiment):
             return_us=self.return_us,
             dtype=self.dtype,
             rank=self.rank,
+            bin_edges=self.cfg.data.bin_edges,
         )
 
         self.layer_boundaries = self.train_dataset.bin_edges
@@ -152,6 +158,7 @@ class Lorenzetti(BaseExperiment):
                     self.hdf5_test,
                     transform=self.transforms,
                     return_us=self.return_us,
+                    bin_edges=self.cfg.data.bin_edges,
                 ).energy.to(self.device)
 
             # concatenate with Einc
@@ -203,6 +210,7 @@ class Lorenzetti(BaseExperiment):
                 self.hdf5_test,
                 transform=self.transforms,  # TODO: Or, apply NormalizeEByLayer popped from model transforms
                 return_us=self.return_us,
+                bin_edges=self.cfg.data.bin_edges,
             )
             samples_dict = {}
             samples_dict["extra_dims"] = samples
