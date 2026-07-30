@@ -1,0 +1,267 @@
+exp_name: vit_lorenzetti_shape_quicktest
+exp_type: lorenzetti
+run_name: lorenzetti_41325
+base_dir: .
+jobid: null
+seed: null
+debug: false
+use_float64: false
+warm_start_idx: 0
+save: true
+use_mlflow: true
+save_source: true
+ema: false
+train: false
+evaluate: true
+evaluation:
+  batchsize: 1024
+  eval_dataset: Lorenzetti
+  eval_mode: low-level
+  eval_hdf5_file: /eos/user/m/msangine/data/lorenzetti/h5/40kElectron.h5
+  eval_cls_n_layer: 2
+  eval_cls_n_hidden: 2048
+  eval_cls_dropout: 0.0
+  eval_cls_lr: 0.0002
+  eval_cls_batch_size: 1000
+  eval_cls_n_epochs: 100
+  eval_cls_save_mem: true
+sample: false
+plotting:
+  loss: true
+mlflow:
+  db: ${base_dir}/runs/${exp_name}/mlflow/mlflow.db
+  artifacts: ${base_dir}/runs/${exp_name}/mlflow/artifacts
+training:
+  iterations: 100
+  batchsize: 16
+  batchsize_sample: 256
+  optimizer: AdamW
+  betas:
+  - 0.9
+  - 0.999
+  eps: 1.0e-08
+  weight_decay: 0.1
+  lr: 0.0001
+  scheduler: CosineAnnealingLR
+  scheduler_scale: 1
+  cosanneal_eta_min: 0
+  onecycle_max_lr: 10
+  onecycle_pct_start: 0.2
+  es_patience: 1000
+  es_load_best_model: false
+  log_every_n_steps: 10
+  validate_every_n_steps: 50
+  validate_every_n_epochs_min: null
+  clip_grad_norm: 1000
+  clip_grad_value: null
+  max_grad_norm: null
+model:
+  _target_: experiments.lorenzetti.model.LorenzettiCFM
+  in_channels: 1
+  list_shape:
+  - - 1
+    - 256
+    - 8
+  - - 1
+    - 32
+    - 32
+  - - 1
+    - 16
+    - 80
+  - - 1
+    - 55
+    - 8
+  - - 1
+    - 13
+    - 32
+  - - 1
+    - 8
+    - 32
+  - - 1
+    - 4
+    - 8
+  - - 1
+    - 4
+    - 8
+  - - 1
+    - 4
+    - 8
+  - - 1
+    - 32
+    - 8
+  - - 1
+    - 32
+    - 8
+  - - 1
+    - 8
+    - 8
+  - - 1
+    - 8
+    - 8
+  - - 1
+    - 5
+    - 8
+  - - 1
+    - 4
+    - 8
+  - - 1
+    - 4
+    - 8
+  - - 1
+    - 2
+    - 8
+  list_patch_shape:
+  - - 1
+    - 8
+    - 1
+  - - 1
+    - 4
+    - 2
+  - - 1
+    - 2
+    - 4
+  - - 1
+    - 1
+    - 8
+  - - 1
+    - 1
+    - 8
+  - - 1
+    - 1
+    - 8
+  - - 1
+    - 2
+    - 4
+  - - 1
+    - 2
+    - 4
+  - - 1
+    - 2
+    - 4
+  - - 1
+    - 8
+    - 1
+  - - 1
+    - 8
+    - 1
+  - - 1
+    - 4
+    - 2
+  - - 1
+    - 4
+    - 2
+  - - 1
+    - 1
+    - 8
+  - - 1
+    - 2
+    - 4
+  - - 1
+    - 2
+    - 4
+  - - 1
+    - 2
+    - 4
+  time_distribution: uniform
+  trajectory: linear
+  odeint_kwargs:
+    method: rk4
+    options:
+      step_size: 0.05
+  net:
+    _target_: nn.vit.ViT
+    param:
+      dim: ${data.n_layers}
+      condition_dim: 18
+      hidden_dim: 480
+      out_channels: 1
+      depth: 6
+      num_heads: 6
+      mlp_ratio: 4
+      attn_drop: 0.0
+      proj_drop: 0.0
+      pos_embedding_coords: cylindrical
+      temperature: 10000
+      learn_pos_embed: true
+      causal_attn: false
+      checkpoint_grads: false
+      num_patches:
+      - - 1
+        - 32
+        - 8
+      - - 1
+        - 8
+        - 16
+      - - 1
+        - 8
+        - 20
+      - - 1
+        - 55
+        - 1
+      - - 1
+        - 13
+        - 4
+      - - 1
+        - 8
+        - 4
+      - - 1
+        - 2
+        - 2
+      - - 1
+        - 2
+        - 2
+      - - 1
+        - 2
+        - 2
+      - - 1
+        - 4
+        - 8
+      - - 1
+        - 4
+        - 8
+      - - 1
+        - 2
+        - 4
+      - - 1
+        - 2
+        - 4
+      - - 1
+        - 5
+        - 1
+      - - 1
+        - 2
+        - 2
+      - - 1
+        - 2
+        - 2
+      - - 1
+        - 1
+        - 2
+      patch_dim: 8
+      use_torch_sdpa: false
+dtype: float32
+model_type: shape
+sample_us: false
+energy_model: /eos/user/m/msangine/lpnhe_workspace/git/my_git/vit4hep/runs/Lorenzetti/lorenzetti_18480/
+n_samples: 100000
+data:
+  n_layers: 17
+  training_file: /eos/user/m/msangine/data/lorenzetti/h5/fixed45kElectron.h5
+  test_file: /eos/user/m/msangine/data/lorenzetti/h5/fixed45kElectron.h5
+  return_us: false
+  transforms:
+    LorenzettiNormalizeLayerEnergy: {}
+    LorenzettiExclusiveLogitTransform:
+      delta: 1.0e-06
+      rescale: false
+    LorenzettiGlobalStandardizeFromFile:
+      model_dir: ./runs/vit_lorenzetti_shape_quicktest/lorenzetti_41325
+      eps: 1.0e-10
+    LorenzettiLogEnergy: {}
+    LorenzettiScaleEnergy:
+      e_min: 6.907755
+      e_max: 13.81551
+finetuning: false
+load_sample: runs/vit_lorenzetti_shape_quicktest/lorenzetti_41325/samples_0.hdf5
+run_idx: 4
+run_dir: ./runs/vit_lorenzetti_shape_quicktest/lorenzetti_41325

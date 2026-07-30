@@ -1,5 +1,5 @@
 exp_type: lorenzetti
-exp_name: Lorenzetti
+exp_name: Lorenzetti_L3
 dtype: float32
 
 model_type: shape
@@ -8,14 +8,14 @@ energy_model: /eos/user/m/msangine/lpnhe_workspace/git/my_git/vit4hep/runs/Loren
 n_samples: 100000   # used if sample_us==true
 
 data:
-  n_layers: 17
-  training_file: /eos/user/m/msangine/data/lorenzetti/h5/fixed45kElectron.h5
-  test_file: /eos/user/m/msangine/data/lorenzetti/h5/fixed45kElectron.h5
+  n_layers: 3
+  training_file: /eos/user/m/msangine/data/lorenzetti/h5/joined_faster/train_fixed_eta03_phi03_L3.h5
+  test_file: /eos/user/m/msangine/data/lorenzetti/h5/joined_faster/test_fixed_eta03_phi03_L3.h5
   return_us: false
   transforms: {
-    LorenzettiNormalizeLayerEnergy: {},
-    LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False},
-    LorenzettiGlobalStandardizeFromFile: {model_dir: None, eps: 1.e-10},
+    LorenzettiNormalizeLayerEnergy: {n_layers: "${data.n_layers}"},
+    LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False, n_layers: "${data.n_layers}"},
+    LorenzettiGlobalStandardizeFromFile: {model_dir: None, eps: 1.e-10, n_layers: "${data.n_layers}"},
     LorenzettiLogEnergy: {},
     LorenzettiScaleEnergy: {e_min: 6.907755, e_max: 13.815510},
   }
@@ -25,7 +25,7 @@ load_sample: false
 evaluation:
   eval_dataset: "Lorenzetti"
   eval_mode: low-level
-  eval_hdf5_file: /eos/user/m/msangine/data/lorenzetti/h5/40kElectron.h5
+  eval_hdf5_file: /eos/user/m/msangine/data/lorenzetti/h5/joined_faster/test_fixed_eta03_phi03_L3.h5
   eval_cls_n_layer: 2
   eval_cls_n_hidden: 2048
   eval_cls_dropout: 0.0
@@ -37,5 +37,5 @@ evaluation:
 defaults:
  - /default
  - /training: cfm/shape
- - /model: cfm_lorenzetti/cfm_lorenzetti
+ - /model: cfm_lorenzetti/cfm_lorenzetti_l3
  - _self_

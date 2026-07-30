@@ -7,8 +7,8 @@ sample_us: False
 n_samples: 100000
 data:
   n_layers: 3
-  training_file: /eos/user/m/msangine/data/lorenzetti/h5/train_fixed45kElectron_L3.h5
-  test_file: /eos/user/m/msangine/data/lorenzetti/h5/test_fixed45kElectron_L3.h5
+  training_file: /eos/user/m/msangine/data/lorenzetti/h5/joined_faster/train_fixed_eta03_phi03_L3.h5
+  test_file: /eos/user/m/msangine/data/lorenzetti/h5/joined_faster/test_fixed_eta03_phi03_L3.h5
   bin_edges: [0, 2048, 3072, 4352]
   return_us: true
   transforms: {

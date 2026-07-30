@@ -6,6 +6,26 @@ import torch
 from experiments.calochallenge.transforms import logit
 
 
+class LorenzettiClipNegativeCells:
+    """
+    Clip negative (post-pedestal-noise) cell energies to zero before layer-energy
+    summation. Unlike CaloGAN's synthetic showers, Lorenzetti cells carry pedestal
+    noise that goes negative on ~5-11% of cells (see LCMA-Project- layer profile
+    report); left as-is, this noise perturbs the layer-energy ratio denominators
+    that LorenzettiNormalizeLayerEnergy computes. Must run before
+    LorenzettiNormalizeLayerEnergy in the transform list.
+    """
+
+    def __init__(self, n_layers=17):
+        self.layer_keys = [f"layer_{i}" for i in range(n_layers)]
+
+    def __call__(self, data_dict, rev=False, rank=0):
+        if not rev:
+            for key in self.layer_keys:
+                data_dict[key] = torch.clamp(data_dict[key], min=0.0)
+        return data_dict
+
+
 class LorenzettiGlobalStandardizeFromFile:
     """
     Standardize features (recommended)

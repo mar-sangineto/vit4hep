@@ -1,0 +1,53 @@
+_target_: experiments.lorenzetti.model.LorenzettiCFM
+in_channels: 1
+# 3-layer variant of cfm_lorenzetti.yaml: only the first 3 detector layers
+# (EMB1, EMB2, EMB3) are kept. list_shape/list_patch_shape/num_patches below
+# are simply the first 3 rows of the corresponding lists in
+# cfm_lorenzetti.yaml -- if the full 17-layer geometry ever changes, copy the
+# first data.n_layers rows over here.
+list_shape: [
+  [1, 256, 8],  # 0: EMB1
+  [1, 32, 32],  # 1: EMB2
+  [1, 16, 80],  # 2: EMB3
+]   # shape of each layer
+list_patch_shape: [
+  [1, 8, 1],    # EMB1   (8 * 1 = 8)
+  [1, 4, 2],    # EMB2   (4 * 2 = 8)
+  [1, 2, 4],    # EMB3   (2 * 4 = 8)
+] # patch shape for each layer
+
+time_distribution: uniform
+trajectory: linear
+odeint_kwargs:
+  method: rk4
+  options:
+    step_size: 0.05
+
+net:
+  _target_: nn.vit.ViT
+  param:
+    dim: ${data.n_layers} # number of layers, driven by the experiment yaml's data.n_layers
+    # condition_dim = number of condition inputs the net is fed: currently
+    # data.n_layers (per-layer energy ratios) + 1 (total event energy).
+    # Bump this by hand when adding new conditions (e.g. +2 for eta/phi) --
+    # kept a plain literal (not computed) so it's a single, obvious, config-only
+    # edit with no code changes required.
+    condition_dim: 4 # 3 layers + 1 energy
+    hidden_dim: 480
+    out_channels: 1
+    depth: 6
+    num_heads: 6
+    mlp_ratio: 4
+    attn_drop: 0.0
+    proj_drop: 0.0
+    pos_embedding_coords: cylindrical
+    temperature: 10000
+    learn_pos_embed: true
+    causal_attn: false
+    checkpoint_grads: false
+    # num_patches[i] = list_shape[i] // list_patch_shape[i] (elementwise), for
+    # each layer above -- must be updated by hand alongside list_shape /
+    # list_patch_shape, since the net is built before the model's __init__ runs.
+    num_patches: [[1, 32, 8], [1, 8, 16], [1, 8, 20]]
+    patch_dim: 8
+    use_torch_sdpa: false

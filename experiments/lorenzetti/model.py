@@ -1,3 +1,4 @@
+import math
 import torch
 from einops import rearrange
 from torchdiffeq import odeint
@@ -10,7 +11,6 @@ class LorenzettiCFM(CFM):
         self,
         net,
         list_shape,
-        list_edges,
         list_patch_shape,
         in_channels=1,
         time_distribution="uniform",
@@ -19,18 +19,24 @@ class LorenzettiCFM(CFM):
         *args,
         **kwargs,
     ):
+        # feature calculation automation
+        self.list_shape = [list(dims) for dims in list_shape]
+        self.list_patch_shape = [list(dims) for dims in list_patch_shape]
+        self.list_edges = [math.prod(dims) for dims in self.list_shape]
+
+        total_shape = [sum(self.list_edges)]
+
+        kwargs.pop("shape", None)
         super().__init__(
             None,
             time_distribution,
             trajectory,
             odeint_kwargs,
             *args,
+            shape=total_shape,
             **kwargs,
         )
 
-        self.list_shape = list(list_shape)
-        self.list_edges = list(list_edges)
-        self.list_patch_shape = list(list_patch_shape)
         self.in_channels = in_channels
 
         self.num_patches_per_dim = []
@@ -45,7 +51,7 @@ class LorenzettiCFM(CFM):
             self.num_patches_per_dim.append(num_patches_dim)
             self.num_patches_per_layer.append(num_patches)
 
-        assert len(list_shape) == len(list_patch_shape), (
+        assert len(self.list_shape) == len(self.list_patch_shape), (
             "list_shape and list_patch_shape must have the same length"
         )
         for i, (s, p) in enumerate(zip(self.list_shape, self.list_patch_shape, strict=True)):

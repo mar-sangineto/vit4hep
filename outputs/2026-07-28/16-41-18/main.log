@@ -1,0 +1,3 @@
+[2026-07-28 16:43:26,213][vit4hep][INFO] - Warm-starting from existing experiment vit_lorenzetti_shape_quicktest/lorenzetti_41325 for run 2
+[2026-07-28 16:43:26,220][vit4hep][DEBUG] - Saving source to ./runs/vit_lorenzetti_shape_quicktest/lorenzetti_41325/source.zip
+[2026-07-28 16:43:51,815][vit4hep][INFO] - Set experiment vit_lorenzetti_shape_quicktest with id 1

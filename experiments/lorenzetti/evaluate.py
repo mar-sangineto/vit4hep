@@ -36,9 +36,9 @@ def eval_lorenzetti_lowlevel(source_array, cfg, list_edges=None):
     if list_edges is None:
         list_edges = [2048, 1024, 1280, 440, 416, 256, 32, 32, 32, 256, 256, 64, 64, 40, 32, 32, 16]
     reference_array = np.hstack(
-        (
+        [
             reference_data[f"layer_{i}"].reshape(-1, edge) for i, edge in enumerate(list_edges)
-        ),
+        ],
     )
 
     # add label in source array

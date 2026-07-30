@@ -1,0 +1,4 @@
+- train=false
+- warm_start_idx=0
+- sample=false
+- load_sample=runs/vit_lorenzetti_shape_quicktest/lorenzetti_41325/samples_0.hdf5

@@ -1,6 +1,8 @@
 _target_: experiments.lorenzetti.model.LorenzettiCFM
 in_channels: 1
-shape: [6320]    # total number of input voxels
+# total voxel and list_edges are derived automatically from list_shape in experiments/lorenzetti/model.py
+# num_patches should be written here and the calculation can be found on calculate_features
+# since the net is built by Hydra before the model's __init__ runs.
 list_shape: [
   [1, 256, 8],  # 0: EMB1
   [1, 32, 32],  # 1: EMB2
@@ -20,7 +22,6 @@ list_shape: [
   [1, 4, 8],    # 15: TileExt2
   [1, 2, 8]     # 16: TileExt3
 ]   # shape of each layer
-list_edges: [2048, 1024, 1280, 440, 416, 256, 32, 32, 32, 256, 256, 64, 64, 40, 32, 32, 16]  # edges used to reconstruct the detector from a flat vector (multiplication of shape)
 list_patch_shape: [
   [1, 8, 1],    # EMB1   (8 * 1 = 8)
   [1, 4, 2],    # EMB2   (4 * 2 = 8)
@@ -51,7 +52,7 @@ odeint_kwargs:
 net:
   _target_: nn.vit.ViT
   param:
-    dim: 17 # number of layers
+    dim: ${data.n_layers} # number of layers, driven by the experiment yaml's data.n_layers
     condition_dim: 18 ### !!! 1 energy + 17 layers + 1 eta + 1 phi = 20
     hidden_dim: 480
     out_channels: 1
@@ -65,6 +66,7 @@ net:
     learn_pos_embed: true
     causal_attn: false
     checkpoint_grads: false
+    # num_patches calculation helper on calculates_features notebook
     num_patches: [[1, 32, 8], [1, 8, 16], [1, 8, 20], [1, 55, 1], [1, 13, 4], [1, 8, 4], [1, 2, 2], [1, 2, 2], [1, 2, 2], [1, 4, 8], [1, 4, 8], [1, 2, 4], [1, 2, 4], [1, 5, 1], [1, 2, 2], [1, 2, 2], [1, 1, 2]]
     patch_dim: 8
     use_torch_sdpa: false
