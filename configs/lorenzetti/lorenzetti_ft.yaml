@@ -6,9 +6,9 @@ model_type: shape
 sample_us: false
 n_samples: 100000
 data:
+  n_layers: 17
   training_file: /eos/user/m/msangine/data/lorenzetti/h5/train_40kElectron.h5
   test_file: /eos/user/m/msangine/data/lorenzetti/h5/test_40kElectron.h5
-  bin_edges: [0, 2048, 3072, 4352, 4792, 5208, 5464, 5496, 5528, 5560, 5816, 6072, 6136, 6200, 6240, 6272, 6304, 6320]
   return_us: false
   transforms: {
     LorenzettiNormalizeLayerEnergy: {},
