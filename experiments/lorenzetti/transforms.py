@@ -119,6 +119,62 @@ class LorenzettiScaleEnergy:
         return data_dict
 
 
+class LorenzettiScaleEnergyFromFile:
+    """
+    Like LorenzettiScaleEnergy, but e_min/e_max are calibrated automatically
+    from the training data's own (log-)energy range on first call, instead of
+    being hardcoded in the config. Must run where LorenzettiScaleEnergy would
+    (after LorenzettiLogEnergy in the forward transform list), so the min/max
+    it sees and caches are already in log-energy space.
+
+    This exists so a new dataset with a different incident-energy range (or
+    unit) doesn't silently reuse another dataset's bounds -- e.g. Lorenzetti's
+    old `LorenzettiScaleEnergy: {e_min: 6.907755, e_max: 13.815510}` was
+    copy-pasted from CaloGAN's config and never recalibrated for Lorenzetti's
+    own energy range, which is what caused the u_0 saturation bug (see
+    job_batchs/logs/lorenzetti_shape_training_registry.md).
+
+    Any transform whose class name contains "FromFile" automatically gets
+    `model_dir` set to the current run directory (experiments/lorenzetti/
+    experiment.py:init_data), so bounds are cached per-run, the same way
+    LorenzettiGlobalStandardizeFromFile caches its mean/std.
+    """
+
+    def __init__(self, model_dir):
+        self.model_dir = model_dir
+        self.bounds_path = os.path.join(model_dir, "energy_log_bounds.npy")
+        self.cond_transform = True
+
+        try:
+            self.e_min, self.e_max = np.load(self.bounds_path)
+            self.written = True
+        except FileNotFoundError:
+            self.written = False
+
+    def write(self):
+        np.save(self.bounds_path, np.array([self.e_min, self.e_max]))
+
+    def __call__(self, data_dict, rev=False, rank=0):
+        if rev:
+            energy = data_dict["energy"]
+            transformed = energy * (self.e_max - self.e_min)
+            transformed += self.e_min
+            data_dict["energy"] = transformed
+        else:
+            if not self.written:
+                log_energy = data_dict["energy"]
+                self.e_min = log_energy.min().item()
+                self.e_max = log_energy.max().item()
+                if rank == 0:
+                    self.write()
+                self.written = True
+            energy = data_dict["energy"]
+            transformed = energy - self.e_min
+            transformed /= self.e_max - self.e_min
+            data_dict["energy"] = transformed
+        return data_dict
+
+
 class LorenzettiExclusiveLogitTransform:
     """
     Take the logit of input data (recommended)

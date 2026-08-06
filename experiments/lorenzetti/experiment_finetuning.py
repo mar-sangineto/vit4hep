@@ -5,15 +5,15 @@ import torch.nn as nn
 from omegaconf import OmegaConf, open_dict
 from torch_ema import ExponentialMovingAverage
 
-from experiments.calogan.experiment import CaloGAN
+from experiments.lorenzetti.experiment import Lorenzetti
 from experiments.logger import LOGGER
 from experiments.misc import remove_module_from_state_dict
 from nn.vit import FinalLayer, get_sincos_pos_embed
 
 
-class CaloGANFTCFM(CaloGAN):
+class LorenzettiFTCFM(Lorenzetti):
     """
-    A class for fine tuning a neural network on a different CaloChallenge dataset
+    A class for fine tuning a neural network on a different Lorenzetti dataset/geometry
     """
 
     def __init__(self, cfg, rank=0, world_size=1):

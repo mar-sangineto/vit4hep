@@ -16,7 +16,7 @@ data:
     LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False, n_layers: "${data.n_layers}"},
     LorenzettiGlobalStandardizeFromFile: {model_dir: None, n_layers: "${data.n_layers}"},
     LorenzettiLogEnergy: {},
-    LorenzettiScaleEnergy: {e_min: 6.907755, e_max: 13.815510},
+    LorenzettiScaleEnergyFromFile: {model_dir: None},
   }
 finetuning: false
 load_sample: false

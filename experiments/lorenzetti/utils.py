@@ -3,20 +3,25 @@ import numpy as np
 
 
 def load_data(data_file, n_layers=17):
-    # Layer energy is in MeV(1e6); truth energy is in GeV(1e9)
+    # Layer energy is stored in MeV, truth/incident energy in GeV. Converting
+    # layers to GeV here makes GeV the single unit for the rest of the
+    # pipeline (transforms, u_i ratios, evaluation) -- without this, ratios
+    # like u_0 = layer_energy / incident_energy come out ~1000x too large.
+    # See job_batchs/logs/lorenzetti_shape_training_registry.md.
     # Electrons simulation was done from 2GeV to 7 TeV
-    
+
     data={}
     shift=5000 # 5GeV for layers to avoid 0 and negative values
-    
+    MEV_PER_GEV = 1000.0
+
     with h5py.File(data_file, "r") as full_file:
-        
+
         for i in range(n_layers): #assumes that the first items are the layers
-            
+
             layer_name = list(full_file.keys())[i]
-            
-            layer_data = full_file[layer_name][:]
-            
+
+            layer_data = full_file[layer_name][:] / MEV_PER_GEV
+
             #data[f"layer_{i}"] = np.log10(layer_data+shift) # log is to deal with a large range of values
             data[f"layer_{i}"] = layer_data
             

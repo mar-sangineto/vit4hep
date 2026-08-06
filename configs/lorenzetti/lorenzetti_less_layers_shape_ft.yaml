@@ -1,5 +1,5 @@
-exp_type: lorenzetti
-exp_name: Lorenzetti_L3
+exp_type: lorenzetti_ft_cfm
+exp_name: Lorenzetti_L3_ft
 dtype: float32
 
 model_type: shape
@@ -20,7 +20,19 @@ data:
     LorenzettiScaleEnergyFromFile: {model_dir: None},
   }
 
-finetuning: false
+finetuning:
+  backbone_cfg: /eos/user/m/msangine/lpnhe_workspace/git/my_git/vit4hep/runs/vit_lorenzetti_shape_l3_batch64_fast/lorenzetti_61024/config_0.yaml
+  backbone_lr: 1.e-5
+  head_lr: 5.e-5
+  embedder_lr: 5.e-5
+  map_x_embedding: false
+  map_c_embedding: false
+  reinitialize_x_embedding: false
+  reinitialize_c_embedding: false
+  reinitialize_pos_embedding: false
+  reinitialize_final_layer: false
+  interpolate: false
+
 load_sample: false
 evaluation:
   eval_dataset: "Lorenzetti"
