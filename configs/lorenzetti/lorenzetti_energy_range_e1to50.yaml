@@ -1,5 +1,5 @@
 exp_type: lorenzetti
-exp_name: Lorenzetti
+exp_name: Lorenzetti_L3_energy_range_e1to50
 dtype: float32
 
 model_type: energy
@@ -7,18 +7,17 @@ sample_us: False
 n_samples: 100000
 data:
   n_layers: 3
-  training_file: /eos/user/m/msangine/data/lorenzetti/h5/train_fixed_HitElectron_L3_50to100.h5
-  test_file: /eos/user/m/msangine/data/lorenzetti/h5/test_fixed_HitElectron_L3_50to100.h5
-  # bin_edges is derived from list_shapes on configs/model/lorenzetti/cfm ones 
-  # to help on its calculation verify the python notebook calculate_features
+  training_file: /eos/user/m/msangine/data/lorenzetti/h5/energy_range_study/train_e1to50.h5
+  test_file: /eos/user/m/msangine/data/lorenzetti/h5/energy_range_study/test_e1to50.h5
   bin_edges: [0, 2048, 3072, 4352]
   return_us: true
   transforms: {
+    LorenzettiClipNegativeCells: {n_layers: "${data.n_layers}"},
     LorenzettiNormalizeLayerEnergy: {n_layers: "${data.n_layers}"},
     LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False, n_layers: "${data.n_layers}"},
     LorenzettiGlobalStandardizeFromFile: {model_dir: None, n_layers: "${data.n_layers}"},
     LorenzettiLogEnergy: {},
-    LorenzettiScaleEnergy: {e_min: 6.907755, e_max: 13.815510},
+    LorenzettiScaleEnergyFromFile: {model_dir: None},
   }
 finetuning: false
 load_sample: false

@@ -144,7 +144,17 @@ class Lorenzetti(BaseExperiment):
 
         t_0 = time.time()
 
-        Einc = torch.rand((self.cfg.n_samples, 1)) * 99 + 1
+        # Sample incident energies from the *actual* training range, not a hardcoded
+        # constant. This used to be `torch.rand(...) * 99 + 1` -- a leftover CaloGAN
+        # 1-100 GeV assumption -- so a model trained on any other range (e.g. 150-200
+        # GeV) was evaluated on conditioning energies 100% outside its training
+        # distribution, causing wild extrapolation and near-total generative failure.
+        # Read the same file LorenzettiScaleEnergyFromFile calibrates its bounds from
+        # (self.hdf5_train, via the first-constructed train_dataset in init_data()).
+        with h5py.File(self.hdf5_train, "r") as f:
+            e_train = f["energy"][:]
+        e_min_gev, e_max_gev = float(e_train.min()), float(e_train.max())
+        Einc = torch.rand((self.cfg.n_samples, 1)) * (e_max_gev - e_min_gev) + e_min_gev
         Einc = Einc.to(device=self.device, dtype=self.dtype)
 
         samples_dict = {}

@@ -11,9 +11,9 @@ data:
   test_file: /eos/user/m/msangine/data/lorenzetti/h5/joined_faster/test_fixed_eta03_phi03_L3.h5
   return_us: false
   transforms: {
-    LorenzettiNormalizeLayerEnergy: {},
-    LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False},
-    LorenzettiGlobalStandardizeFromFile: {model_dir: None},
+    LorenzettiNormalizeLayerEnergy: {n_layers: "${data.n_layers}"},
+    LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False, n_layers: "${data.n_layers}"},
+    LorenzettiGlobalStandardizeFromFile: {model_dir: None, n_layers: "${data.n_layers}"},
     LorenzettiLogEnergy: {},
     LorenzettiScaleEnergy: {e_min: 6.907755, e_max: 13.815510},
   }
