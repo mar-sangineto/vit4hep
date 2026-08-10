@@ -14,11 +14,21 @@ odeint_kwargs:
   options:
     step_size: 0.05
 
+# phi encoding ablation: compare feeding phi "direct" (sin/cos concatenated
+# into the shared condition vector, use_phi_mlp: false) against a dedicated
+# learned embedding (use_phi_mlp: true, see PhiEmbedder in model.py).
+# condition_dim below must match: base conditions (u_i + energy = 59)
+#   + 3 (eta, sin(phi), cos(phi))              -> 62, if use_phi_mlp: false
+#   + 1 (eta) + phi_embed_dim                  -> 59 + 1 + phi_embed_dim, if use_phi_mlp: true
+use_phi_mlp: false
+phi_embed_dim: 16
+phi_num_frequencies: 16
+
 net:
   _target_: nn.vit.ViT
   param:
     dim: 3
-    condition_dim: 66
+    condition_dim: 62
     hidden_dim: 480
     out_channels: 1
     depth: 6

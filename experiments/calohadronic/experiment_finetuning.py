@@ -217,7 +217,28 @@ class CaloHadronicFT(CaloHadronic):
             device=self.device,
         ).unsqueeze(1)
 
-        samples = {"energy": Einc}
+        # sample incidence direction per-event instead of a fixed (eta, phi)
+        # point: eta uniformly over the configured range, phi uniformly over
+        # the full [-pi, pi], unless a fixed value is requested via config
+        # (gen_eta/gen_phi with a single value, useful for debugging).
+        gen_eta = self.cfg.gen_eta
+        gen_phi = self.cfg.gen_phi
+        eta = torch.tensor(
+            np.random.uniform(gen_eta[0], gen_eta[1], size=self.cfg.n_samples)
+            if len(gen_eta) == 2
+            else np.full(self.cfg.n_samples, gen_eta[0]),
+            dtype=self.dtype,
+            device=self.device,
+        ).unsqueeze(1)
+        phi = torch.tensor(
+            np.random.uniform(-np.pi, np.pi, size=self.cfg.n_samples)
+            if gen_phi is None
+            else np.full(self.cfg.n_samples, gen_phi[0]),
+            dtype=self.dtype,
+            device=self.device,
+        ).unsqueeze(1)
+
+        samples = {"energy": Einc, "eta": eta, "phi": phi}
         samples["extra_dims"] = torch.empty(
             self.cfg.model.shape[0], dtype=self.dtype, device=self.device
         )
@@ -240,25 +261,10 @@ class CaloHadronicFT(CaloHadronic):
                 u_samples = self.sample_us(transformed_cond_loader)
                 transformed_cond = torch.cat([u_samples, transformed_cond], dim=1)
 
-                # Add LEMURS conditions
-                theta = self.cfg.gen_theta
-                phi = self.cfg.gen_phi
-                label = torch.tensor(self.cfg.gen_label, dtype=self.dtype).to(self.device)
-                theta_tensor = torch.full(
-                    (transformed_cond.shape[0], 1),
-                    theta,
-                    dtype=self.dtype,
-                    device=self.device,
-                )
-                phi_tensor = torch.full(
-                    (transformed_cond.shape[0], 1),
-                    phi,
-                    dtype=self.dtype,
-                    device=self.device,
-                )
-                label_tensor = label.unsqueeze(0).repeat(transformed_cond.shape[0], 1)
+                # Add the per-event eta/phi conditions computed above
+                # (already normalized/sin-cos-encoded by AddEtaPhiConditions).
                 transformed_cond = torch.cat(
-                    [transformed_cond, theta_tensor, phi_tensor, label_tensor], dim=1
+                    [transformed_cond, samples["additional_conds"].to(self.device)], dim=1
                 )
                 transformed_cond_loader = DataLoader(
                     dataset=transformed_cond,

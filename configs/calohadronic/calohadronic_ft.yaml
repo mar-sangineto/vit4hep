@@ -6,9 +6,11 @@ model_type: shape
 sample_us: false
 energy_model: ./runs/CaloChallenge_energy/calochallenge_ds1_photons_energy/
 n_samples: 50000
-gen_theta: 0.5
-gen_phi: 0.5
-gen_label: [0.2, 0.2, 0.2, 0.2, 0.2]
+# eta range to sample from at generation time; a single value (e.g. [0.0])
+# pins eta to a fixed point, mainly useful for debugging. phi is always
+# sampled uniformly over [-pi, pi] unless pinned to a single value.
+gen_eta: [-3.0, 3.0]
+gen_phi: null
 data:
   return_us: False
   max_files_per_worker: 5
@@ -41,10 +43,8 @@ data:
       dict_shape: 
         ecal: [10, 15, 15]
         hcal: [48, 30, 30]
-    AddLEMURSConditions:
-      theta: ${gen_theta}
-      phi: ${gen_phi}
-      label: ${gen_label}
+    AddEtaPhiConditions:
+      eta_range: [-3.0, 3.0]
 
 finetuning:
   backbone_cfg: ./runs/lemurs_all/lemurs_55537/config_0.yaml
@@ -54,7 +54,12 @@ finetuning:
   map_x_embedding: false
   map_c_embedding: false
   reinitialize_x_embedding: false
-  reinitialize_c_embedding: false
+  # The backbone's c_embedder was trained on the old fixed-point condition
+  # layout (theta, phi, 5-way detector label = 7 dims). AddEtaPhiConditions
+  # produces a different layout (eta, sin(phi), cos(phi) = 3 dims, or
+  # eta + phi_embed_dim if use_phi_mlp is on), so c_embedder must be
+  # reinitialized rather than reused as-is.
+  reinitialize_c_embedding: true
   reinitialize_pos_embedding: true
   reinitialize_final_layer: true
   interpolate: true

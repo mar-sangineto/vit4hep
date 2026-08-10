@@ -11,6 +11,8 @@ def load_data(hdf5_file, local_index=None, dtype="float32"):
         "energy": torch.from_numpy(event_data["energy"]).to(dtype),
         "ecal": torch.from_numpy(event_data["ecal"]).to(dtype),
         "hcal": torch.from_numpy(event_data["hcal"]).to(dtype),
+        "eta": torch.from_numpy(event_data["eta"]).to(dtype),
+        "phi": torch.from_numpy(event_data["phi"]).to(dtype),
     }
 
     # reshape if a single event is loaded

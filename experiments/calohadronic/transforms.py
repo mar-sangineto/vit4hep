@@ -331,28 +331,40 @@ class SumPool3dDownScale:
         return data_dict
 
 
-class AddLEMURSConditions:
-    def __init__(self, theta=0.5, phi=0.5, label=[0.2, 0.2, 0.2, 0.2, 0.2]):
-        self.theta = theta
-        self.phi = phi
-        self.label = label
-        self.n_conds = 2 + len(label)
+class AddEtaPhiConditions:
+    """
+    Add the per-event incident eta/phi as generation conditions.
+
+    Unlike the former ``AddLEMURSConditions`` (which broadcast a single,
+    config-level (theta, phi) pair to every event -- a "fixed point" in
+    angle space, only usable because the dataset itself had no per-event
+    angle information), this reads the real ``eta``/``phi`` fields written
+    for each event and uses them directly, so the network is actually
+    conditioned on incidence direction instead of a constant.
+
+    eta is linearly rescaled to roughly O(1) using ``eta_range``.
+    phi is periodic on [-pi, pi], so a plain min-max normalization would
+    introduce a fake discontinuity at the +-pi wrap-around (phi=-pi and
+    phi=+pi are the same direction but land on opposite ends of [0, 1]).
+    To avoid that we always encode it as (sin(phi), cos(phi)), which is a
+    continuous, bijective representation of the angle (see e.g. Fourier
+    feature encodings of periodic/cyclical inputs, Tancik et al. 2020).
+    This is required regardless of how the resulting features are later
+    consumed by the network (concatenated directly, or first passed
+    through a dedicated embedding MLP, see ``model.py::PhiEmbedder``).
+    """
+
+    def __init__(self, eta_range=(-3.0, 3.0)):
+        self.cond_transform = True
+        self.eta_min, self.eta_max = eta_range
 
     def __call__(self, data_dict, rev=False, rank=0):
         if rev:
             return data_dict
         else:
-            dtype = data_dict["energy"].dtype
-            device = data_dict["energy"].device
-            energy_shape = data_dict["energy"].shape
-            additional_conds = (
-                torch.tensor(
-                    [self.theta, self.phi] + self.label,
-                    dtype=dtype,
-                    device=device,
-                )
-                .unsqueeze(0)
-                .repeat(energy_shape, 1)
-            )
+            eta = data_dict["eta"]
+            phi = data_dict["phi"]
+            eta_norm = 2 * (eta - self.eta_min) / (self.eta_max - self.eta_min) - 1
+            additional_conds = torch.cat([eta_norm, torch.sin(phi), torch.cos(phi)], dim=-1)
             data_dict["additional_conds"] = additional_conds
             return data_dict

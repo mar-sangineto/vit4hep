@@ -1,8 +1,44 @@
 import torch
+import torch.nn as nn
 from einops import rearrange
 from torchdiffeq import odeint
 
 from models.base_model import CFM
+
+
+class PhiEmbedder(nn.Module):
+    """
+    Learned embedding of a periodic incidence angle phi, following the same
+    "Fourier features + MLP" recipe used for diffusion timestep embeddings
+    (see nn.vit.TimestepEmbedder). Several papers on conditioning generative
+    models on cyclical inputs (e.g. Tancik et al. 2020, "Fourier Features
+    Let Networks Learn High Frequency Functions in Low Dimensional Domains")
+    report that projecting a periodic scalar through multi-frequency
+    sin/cos features and a small MLP -- instead of feeding it (or a single
+    sin/cos pair) straight into the shared conditioning MLP -- gives the
+    network an easier time learning the angular dependence.
+
+    This module exists to make that an empirical, config-toggled choice
+    (``use_phi_mlp`` in CaloHadCFM) rather than a fixed architectural
+    decision, so the two options can be compared directly on the same
+    dataset/backbone.
+    """
+
+    def __init__(self, embed_dim, num_frequencies=16):
+        super().__init__()
+        self.num_frequencies = num_frequencies
+        self.register_buffer("freqs", torch.arange(1, num_frequencies + 1, dtype=torch.float32))
+        self.mlp = nn.Sequential(
+            nn.Linear(2 * num_frequencies, embed_dim),
+            nn.SiLU(),
+            nn.Linear(embed_dim, embed_dim),
+        )
+
+    def forward(self, phi):
+        """phi: (B, 1) tensor of angles in radians."""
+        args = phi * self.freqs[None, :]
+        embedding = torch.cat([torch.sin(args), torch.cos(args)], dim=-1)
+        return self.mlp(embedding)
 
 
 class CaloHadCFM(CFM):
@@ -16,6 +52,9 @@ class CaloHadCFM(CFM):
         time_distribution="uniform",
         trajectory="linear",
         odeint_kwargs=None,
+        use_phi_mlp=False,
+        phi_embed_dim=16,
+        phi_num_frequencies=16,
         *args,
         **kwargs,
     ):
@@ -31,6 +70,19 @@ class CaloHadCFM(CFM):
         self.list_shape = list(list_shape)
         self.list_edges = list(list_edges)
         self.list_patch_shape = list(list_patch_shape)
+
+        # AddEtaPhiConditions (experiments/calohadronic/transforms.py) always
+        # appends [eta, sin(phi), cos(phi)] as the last 3 columns of the
+        # condition vector `c`, so periodicity is handled correctly either
+        # way. use_phi_mlp selects *how* phi then reaches the network:
+        #  - False ("direct"): sin(phi)/cos(phi) stay concatenated in `c`
+        #    and are embedded jointly with everything else by net.c_embedder.
+        #  - True ("mlp"): sin(phi)/cos(phi) are recombined into phi via
+        #    atan2, re-embedded through a dedicated PhiEmbedder, and the
+        #    result replaces the raw (sin, cos) pair before net.c_embedder.
+        self.use_phi_mlp = use_phi_mlp
+        if self.use_phi_mlp:
+            self.phi_embedder = PhiEmbedder(phi_embed_dim, phi_num_frequencies)
 
         self.num_patches_per_dim = []
         self.num_patches_per_layer = []
@@ -85,8 +137,22 @@ class CaloHadCFM(CFM):
         x = torch.cat(x_split, dim=1)
         return x
 
+    def embed_conditions(self, c):
+        """
+        Replace the trailing (sin(phi), cos(phi)) columns added by
+        AddEtaPhiConditions with a learned PhiEmbedder embedding, when
+        use_phi_mlp is enabled. No-op otherwise.
+        """
+        if not self.use_phi_mlp:
+            return c
+        c_rest, sin_phi, cos_phi = c[:, :-2], c[:, -2:-1], c[:, -1:]
+        phi = torch.atan2(sin_phi, cos_phi)
+        phi_embed = self.phi_embedder(phi)
+        return torch.cat([c_rest, phi_embed], dim=-1)
+
     def forward(self, x, t, c):
         x = self.to_patches(x)
+        c = self.embed_conditions(c)
         z = self.net(x, t, c)
         z = self.from_patches(z)
         return z
