@@ -240,7 +240,12 @@ def train_cls(model, data_train, optim, epoch, arg):
         loss.backward()
         optim.step()
 
-        if i % (len(data_train) // 2) == 0:
+        # max(1, ...) guards against ZeroDivisionError when the dataloader has fewer
+        # than 2 batches (i.e. a small/thin training set relative to batch size) --
+        # this used to crash with "integer modulo by zero" instead of just logging
+        # every step. See notes vault Bugs/2026-08-07 Classifier Eval ZeroDivisionError
+        # on Thin Datasets.md.
+        if i % max(1, len(data_train) // 2) == 0:
             print(
                 f"Epoch {epoch + 1:3d} / {arg.cls_n_epochs}, step {i:4d} / {len(data_train)}; loss {loss.item():.4f}"
             )
