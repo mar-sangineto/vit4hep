@@ -1,0 +1,48 @@
+exp_type: lorenzetti
+exp_name: Lorenzetti_L3_HIT
+dtype: float32
+
+# HIT-level (pre-digitization, no pedestal noise) counterpart of lorenzetti_less_layers_shape.yaml
+# (the fixed_units shape config, trained on ESD-level CaloCellContainer data).
+# Same fixed point (eta=0.3/phi=0.3), same L3 layers, same 50-100 GeV incident-energy range
+# (matched to the ESD reference file's range for an apples-to-apples comparison), same
+# architecture/training recipe -- only the data source changes, per the "HIT-level as
+# independent sparsity experiment" task (see notes vault Bugs/OPEN Shape Model Fails to
+# Reproduce Shower Sparsity.md).
+model_type: shape
+sample_us: false
+energy_model: /eos/user/m/msangine/lpnhe_workspace/git/my_git/vit4hep/runs/Lorenzetti/lorenzetti_18480/  # used if sample_us==true
+n_samples: 100000   # used if sample_us==true
+
+data:
+  n_layers: 3
+  training_file: /eos/user/m/msangine/data/lorenzetti/h5/train_fixed_HitElectron_L3_50to100.h5
+  test_file: /eos/user/m/msangine/data/lorenzetti/h5/test_fixed_HitElectron_L3_50to100.h5
+  return_us: false
+  transforms: {
+    LorenzettiNormalizeLayerEnergy: {n_layers: "${data.n_layers}"},
+    LorenzettiExclusiveLogitTransform: {delta: 1.0e-6, rescale: False, n_layers: "${data.n_layers}"},
+    LorenzettiGlobalStandardizeFromFile: {model_dir: None, eps: 1.e-10, n_layers: "${data.n_layers}"},
+    LorenzettiLogEnergy: {},
+    LorenzettiScaleEnergyFromFile: {model_dir: None},
+  }
+
+finetuning: false
+load_sample: false
+evaluation:
+  eval_dataset: "Lorenzetti"
+  eval_mode: low-level
+  eval_hdf5_file: /eos/user/m/msangine/data/lorenzetti/h5/test_fixed_HitElectron_L3_50to100.h5
+  eval_cls_n_layer: 2
+  eval_cls_n_hidden: 2048
+  eval_cls_dropout: 0.0
+  eval_cls_lr: 2.e-4
+  eval_cls_batch_size: 1000
+  eval_cls_n_epochs: 100
+  eval_cls_save_mem: True
+
+defaults:
+ - /default
+ - /training: cfm/shape
+ - /model: cfm_lorenzetti/cfm_lorenzetti_l3
+ - _self_
