@@ -18,6 +18,7 @@ class LorenzettiDataset(Dataset):
         dtype=torch.float32,
         rank=0,
         bin_edges=None,
+        use_eta_phi_condition=False,
     ):
         """
         Arguments:
@@ -28,6 +29,13 @@ class LorenzettiDataset(Dataset):
             rank: rank of the process
             bin_edges: cumulative voxel-count boundaries per layer (len = n_layers + 1);
                 defaults to the original 17-layer edges if not given
+            use_eta_phi_condition: (energy model only, return_us=True) append each
+                event's raw per-event (eta, phi) -- loaded from the file's "eta"/"phi"
+                or "truth_kinematics" fields, see utils.py::load_data -- onto the
+                conditioning vector alongside incident energy. Left untransformed
+                (no LogEnergy/ScaleEnergy applied, unlike "energy"): the values are
+                already O(1) for any eta/phi window used so far. Requires the model
+                config's dims_c to be bumped to match (energy + eta + phi = 3).
         """
 
         if bin_edges is None:
@@ -43,6 +51,7 @@ class LorenzettiDataset(Dataset):
         self.return_us = return_us
         self.transform = transform
         self.dtype = dtype
+        self.use_eta_phi_condition = use_eta_phi_condition
 
         # apply preprocessing
         if self.transform:
@@ -53,7 +62,16 @@ class LorenzettiDataset(Dataset):
 
         if self.return_us:
             self.layers = self.data_dict["extra_dims"]
-            self.energy = self.data_dict["energy"]
+            if self.use_eta_phi_condition:
+                assert "eta" in self.data_dict and "phi" in self.data_dict, (
+                    "data.use_eta_phi_condition=true but this file has no "
+                    "eta/phi/truth_kinematics field (see utils.py::load_data)"
+                )
+                self.energy = torch.hstack(
+                    (self.data_dict["energy"], self.data_dict["eta"], self.data_dict["phi"])
+                )
+            else:
+                self.energy = self.data_dict["energy"]
         else:
             # store data as 2d array with flattened layers: (dataset size, # of voxels)
             # geometric information is recovered from the bin edges

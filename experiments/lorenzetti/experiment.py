@@ -43,6 +43,11 @@ class Lorenzetti(BaseExperiment):
         self.hdf5_train = self.cfg.data.training_file
         self.hdf5_test = self.cfg.data.test_file
         self.return_us = self.cfg.data.return_us
+        # Optional (energy model only): condition on each event's own (eta, phi)
+        # in addition to incident energy, instead of training blind across
+        # whatever eta/phi span the training file covers. See datasets.py and
+        # sample_n() below. Defaults to False so every existing config is unaffected.
+        self.use_eta_phi_condition = self.cfg.data.get("use_eta_phi_condition", False)
         self.transforms = []
         
         self.n_layers = self.cfg.data.n_layers
@@ -78,6 +83,7 @@ class Lorenzetti(BaseExperiment):
             dtype=self.dtype,
             rank=self.rank,
             bin_edges=self.bin_edges,
+            use_eta_phi_condition=self.use_eta_phi_condition,
         )
 
         self.val_dataset = LorenzettiDataset(
@@ -87,6 +93,7 @@ class Lorenzetti(BaseExperiment):
             dtype=self.dtype,
             rank=self.rank,
             bin_edges=self.bin_edges,
+            use_eta_phi_condition=self.use_eta_phi_condition,
         )
 
         self.layer_boundaries = self.train_dataset.bin_edges
@@ -164,7 +171,24 @@ class Lorenzetti(BaseExperiment):
             if hasattr(fn, "cond_transform"):
                 samples_dict = fn(samples_dict)
 
-        transformed_cond = samples_dict["energy"] # i imagine that here it should be added the extra C such as eta and phi
+        transformed_cond = samples_dict["energy"]
+        if self.use_eta_phi_condition:
+            # Draw synthetic per-sample (eta, phi) uniformly within the training
+            # file's own truth_kinematics range -- exactly the same "resample
+            # within the training distribution" approach already used for Einc
+            # above, just extended to the two extra conditioning dims. Left
+            # untransformed to match datasets.py's forward-pass convention (no
+            # LogEnergy/ScaleEnergy applied to eta/phi).
+            with h5py.File(self.hdf5_train, "r") as f:
+                truth_kinematics = f["truth_kinematics"][:]
+            eta_min_val, eta_max_val = float(truth_kinematics[:, 0].min()), float(truth_kinematics[:, 0].max())
+            phi_min_val, phi_max_val = float(truth_kinematics[:, 1].min()), float(truth_kinematics[:, 1].max())
+            Eta = torch.rand((self.cfg.n_samples, 1)) * (eta_max_val - eta_min_val) + eta_min_val
+            Phi = torch.rand((self.cfg.n_samples, 1)) * (phi_max_val - phi_min_val) + phi_min_val
+            Eta = Eta.to(device=self.device, dtype=self.dtype)
+            Phi = Phi.to(device=self.device, dtype=self.dtype)
+            transformed_cond = torch.hstack([transformed_cond, Eta, Phi])
+
         batchsize_sample = self.cfg.training.batchsize_sample
         transformed_cond_loader = DataLoader(
             dataset=transformed_cond, batch_size=batchsize_sample, shuffle=False

@@ -28,16 +28,20 @@ def load_data(data_file, n_layers=17):
         energy = full_file["energy"][:]
         #data["energy"] = np.log10(energy) # truth particle wont have negative energy
         data["energy"] = energy
-        
-        ### Next step : implement eta and phi. Initial tests with just energy so that it works as it is working in calogan
-#         # to integrate C
-#         if "eta" in full_file:
-#             data["eta"] = full_file["eta"][:]
-#         if "phi" in full_file:
-#             data["phi"] = full_file["phi"][:] # IDEA: Integrate as an output from an MLP
-            
-#         elif "truth_kinematics" in full_file:
-#             data["eta"] = full_file["truth_kinematics"][:][:, 0]
-#             data["phi"] = full_file["truth_kinematics"][:][:, 1]
-    
+
+        # Per-event eta/phi, when present, for optional eta/phi conditioning (see
+        # data.use_eta_phi_condition in the energy-model config / datasets.py /
+        # experiment.py::sample_n()). Left as plain, untransformed dict entries --
+        # no transform in transforms.py references the "eta"/"phi" keys, so they
+        # pass through the forward/reverse transform chain unchanged.
+        # reshaped to (N, 1) to match "energy"'s 2D convention -- datasets.py
+        # calls .flatten(start_dim=1) on every data_dict entry.
+        if "eta" in full_file:
+            data["eta"] = full_file["eta"][:].reshape(-1, 1)
+        if "phi" in full_file:
+            data["phi"] = full_file["phi"][:].reshape(-1, 1)
+        elif "truth_kinematics" in full_file:
+            data["eta"] = full_file["truth_kinematics"][:][:, 0].reshape(-1, 1)
+            data["phi"] = full_file["truth_kinematics"][:][:, 1].reshape(-1, 1)
+
     return data

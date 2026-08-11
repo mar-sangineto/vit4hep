@@ -1,0 +1,25 @@
+_target_: models.base_model.CFM
+
+shape: ["${data.n_layers}"] # number of layers, driven by the experiment yaml's data.n_layers
+
+time_distribution: uniform
+trajectory: linear
+odeint_kwargs:
+  method: rk4
+  options:
+    step_size: 0.05
+
+net:
+  _target_: nn.cfm.transformer_cfm.ParallelTransformer
+  param:
+    dims_in: ${data.n_layers} # number of layers, driven by the experiment yaml's data.n_layers
+    dims_c: 3 # dimension of C variable: energy + eta + phi (data.use_eta_phi_condition: true)
+    dim_embedding: 64
+    nhead: 4
+    num_encoder_layers: 4
+    num_decoder_layers: 4
+    dim_feedforward: 512
+    dropout: 0.0
+    activation: relu
+    embeds: true
+    encode_t_scale: 30
