@@ -260,7 +260,14 @@ class Lorenzetti(BaseExperiment):
             )
             samples_dict = {}
             samples_dict["extra_dims"] = samples
-            samples_dict["energy"] = conditions
+            # `conditions` is the full C vector sample_n() fed the network -- just
+            # [energy] normally, but [energy, eta, phi] when
+            # data.use_eta_phi_condition=true (see sample_n()). The reverse-transform
+            # chain below (LorenzettiNormalizeLayerEnergy etc.) only expects the
+            # energy scalar in data_dict["energy"], so slice it out here regardless
+            # of conditions' width -- mirrors how the model_type != "energy" (shape)
+            # branch already does `conditions[:, 0]` / `conditions[:, 1:]` below.
+            samples_dict["energy"] = conditions[:, :1]
             reference_dict = {}
             reference_dict["extra_dims"] = reference.layers
             reference_dict["energy"] = reference.energy
